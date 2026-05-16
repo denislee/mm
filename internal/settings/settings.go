@@ -1,4 +1,4 @@
-// Package settings persists user-tweakable UI options for cc-monitor.
+// Package settings persists user-tweakable UI options for mm.
 // Currently this covers the font family (path to a .ttf/.otf file, or empty
 // to use the bundled Go font) and a scale multiplier applied to every text
 // size in the interface.
@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 )
 
-// Settings is the on-disk shape of ~/.config/cc-monitor/settings.json.
+// Settings is the on-disk shape of ~/.config/mm/settings.json.
 type Settings struct {
 	// FontPath is an absolute (or ~/-prefixed) path to a TrueType or OpenType
 	// font file. Empty means "use the bundled Go font".
@@ -43,7 +43,7 @@ func ConfigPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".config", "cc-monitor", "settings.json"), nil
+	return filepath.Join(home, ".config", "mm", "settings.json"), nil
 }
 
 // Load reads settings.json, returning defaults if it doesn't exist.

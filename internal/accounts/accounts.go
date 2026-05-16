@@ -1,4 +1,4 @@
-// Package accounts persists the list of Anthropic accounts cc-monitor watches.
+// Package accounts persists the list of Anthropic accounts mm watches.
 // Each account is a (name, credentials-file path) pair; the credentials file
 // is the OAuth token blob written by `claude` login.
 package accounts
@@ -58,7 +58,7 @@ func ConfigPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".config", "cc-monitor", "accounts.json"), nil
+	return filepath.Join(home, ".config", "mm", "accounts.json"), nil
 }
 
 // Load reads accounts.json. If the file doesn't exist (or is empty), returns

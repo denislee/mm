@@ -1,7 +1,7 @@
-// Command cc-monitor is a small dashboard that shows the Anthropic
+// Command mm is a small dashboard that shows the Anthropic
 // Claude Code usage limits (the same numbers as the `/usage` slash command)
 // for one or more accounts. Accounts are configured from inside the UI and
-// persisted to ~/.config/cc-monitor/accounts.json.
+// persisted to ~/.config/mm/accounts.json.
 //
 // Flags:
 //
@@ -22,13 +22,13 @@ import (
 	"gioui.org/io/system"
 	"gioui.org/unit"
 
-	"github.com/dns/cc-monitor/internal/accounts"
-	"github.com/dns/cc-monitor/internal/cache"
-	"github.com/dns/cc-monitor/internal/gemini"
-	"github.com/dns/cc-monitor/internal/quota"
-	"github.com/dns/cc-monitor/internal/settings"
-	"github.com/dns/cc-monitor/internal/ui"
-	"github.com/dns/cc-monitor/internal/usage"
+	"github.com/denislee/mm/internal/accounts"
+	"github.com/denislee/mm/internal/cache"
+	"github.com/denislee/mm/internal/gemini"
+	"github.com/denislee/mm/internal/quota"
+	"github.com/denislee/mm/internal/settings"
+	"github.com/denislee/mm/internal/ui"
+	"github.com/denislee/mm/internal/usage"
 )
 
 func main() {
@@ -42,7 +42,7 @@ func main() {
 			log.Fatalf("open log file: %v", err)
 		}
 		log.SetOutput(io.MultiWriter(os.Stderr, f))
-		log.Printf("cc-monitor starting; logging to %s", *logPath)
+		log.Printf("mm starting; logging to %s", *logPath)
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -60,7 +60,7 @@ func main() {
 
 	w := new(app.Window)
 	w.Option(
-		app.Title("cc-monitor"),
+		app.Title("mm"),
 		app.Size(unit.Dp(620), unit.Dp(560)),
 	)
 

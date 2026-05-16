@@ -1,4 +1,4 @@
-// Package ui renders the cc-monitor Gio interface: a scrollable list of
+// Package ui renders the mm Gio interface: a scrollable list of
 // Anthropic accounts, each showing the Claude Code usage limits returned by
 // the /usage endpoint, plus an inline form to add new accounts.
 package ui
@@ -31,10 +31,10 @@ import (
 	"gioui.org/widget/material"
 	"golang.org/x/exp/shiny/materialdesign/icons"
 
-	"github.com/dns/cc-monitor/internal/accounts"
-	"github.com/dns/cc-monitor/internal/fonts"
-	"github.com/dns/cc-monitor/internal/quota"
-	"github.com/dns/cc-monitor/internal/settings"
+	"github.com/denislee/mm/internal/accounts"
+	"github.com/denislee/mm/internal/fonts"
+	"github.com/denislee/mm/internal/quota"
+	"github.com/denislee/mm/internal/settings"
 )
 
 // Material design icons, decoded once at init.

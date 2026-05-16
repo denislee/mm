@@ -1,4 +1,4 @@
-// Package quota defines the provider-agnostic data model the cc-monitor UI
+// Package quota defines the provider-agnostic data model the mm UI
 // consumes. Each backend (Anthropic /usage, Gemini retrieveUserQuota, ...)
 // converts its native response into a Snapshot so the rendering code can
 // treat them uniformly.

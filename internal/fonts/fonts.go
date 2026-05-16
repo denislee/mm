@@ -1,6 +1,6 @@
 // Package fonts enumerates a curated list of common system fonts shipped on
 // Linux distributions. It returns only the entries whose files actually exist
-// on disk, so the cc-monitor settings dropdown can show concrete choices the
+// on disk, so the mm settings dropdown can show concrete choices the
 // user can select without typing a path.
 package fonts
 

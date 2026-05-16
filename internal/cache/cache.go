@@ -1,8 +1,8 @@
 // Package cache persists fetched usage snapshots to disk so multiple running
-// instances of cc-monitor can share the same data without each hitting the
+// instances of mm can share the same data without each hitting the
 // provider's usage endpoint on its own timer.
 //
-// The cache lives at ~/.config/cc-monitor/usage_cache.json and is keyed by
+// The cache lives at ~/.config/mm/usage_cache.json and is keyed by
 // "<provider>:<expanded-creds-path>" so renaming an account doesn't lose its
 // data and two accounts pointing at the same credentials file share state.
 package cache
@@ -14,8 +14,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/dns/cc-monitor/internal/accounts"
-	"github.com/dns/cc-monitor/internal/quota"
+	"github.com/denislee/mm/internal/accounts"
+	"github.com/denislee/mm/internal/quota"
 )
 
 // TTL is how long a cached entry is considered fresh enough that a second
@@ -43,7 +43,7 @@ func Path() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".config", "cc-monitor", "usage_cache.json"), nil
+	return filepath.Join(home, ".config", "mm", "usage_cache.json"), nil
 }
 
 // Load reads usage_cache.json, returning an empty Cache if the file doesn't

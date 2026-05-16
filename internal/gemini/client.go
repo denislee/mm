@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dns/cc-monitor/internal/quota"
+	"github.com/denislee/mm/internal/quota"
 )
 
 const (
@@ -68,7 +68,7 @@ func NewClient() *Client {
 	return &Client{
 		HTTP:      &http.Client{Timeout: 15 * time.Second},
 		CredsPath: filepath.Join(home, ".gemini", "oauth_creds.json"),
-		UserAgent: "cc-monitor/0.1 (GeminiCLI-compat)",
+		UserAgent: "mm/0.1 (GeminiCLI-compat)",
 	}
 }
 
@@ -171,7 +171,7 @@ func decodeQuota(body []byte) quota.Snapshot {
 		if t.best.RemainingFraction != nil {
 			util = (1.0 - *t.best.RemainingFraction) * 100
 		}
-		// The server reports resetTime per bucket; cc-monitor's pacing math
+		// The server reports resetTime per bucket; mm's pacing math
 		// needs a total window duration. Use the time until reset as a best
 		// guess — for daily windows that's accurate the moment after a
 		// reset and a slight under-estimate later in the day, which is

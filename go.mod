@@ -1,4 +1,4 @@
-module github.com/dns/cc-monitor
+module github.com/denislee/mm
 
 go 1.25.0
 

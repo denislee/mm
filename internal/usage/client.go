@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/dns/cc-monitor/internal/quota"
+	"github.com/denislee/mm/internal/quota"
 )
 
 // Endpoint is the OAuth-authenticated usage URL.
@@ -56,7 +56,7 @@ func NewClient() *Client {
 	return &Client{
 		HTTP:      &http.Client{Timeout: 15 * time.Second},
 		CredsPath: filepath.Join(home, ".claude", ".credentials.json"),
-		UserAgent: "cc-monitor/0.1",
+		UserAgent: "mm/0.1",
 	}
 }
 

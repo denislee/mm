@@ -2,7 +2,7 @@ package ui
 
 import "image/color"
 
-// Palette is the set of colors cc-monitor renders with. Variants are picked at
+// Palette is the set of colors mm renders with. Variants are picked at
 // runtime via Settings.Theme; applyPalette swaps the live values used by the
 // rest of the package.
 type Palette struct {

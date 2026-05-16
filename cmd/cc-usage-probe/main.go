@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/dns/cc-monitor/internal/usage"
+	"github.com/denislee/mm/internal/usage"
 )
 
 func main() {

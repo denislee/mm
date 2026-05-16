@@ -1,5 +1,5 @@
-BIN := bin/cc-monitor
-PKG := ./cmd/cc-monitor
+BIN := bin/mm
+PKG := ./cmd/mm
 GO  ?= go
 
 .PHONY: all build run clean tidy vet fmt install
@@ -25,7 +25,7 @@ tidy:
 	$(GO) mod tidy
 
 install: build
-	install -Dm755 $(BIN) $(HOME)/.local/bin/cc-monitor
+	install -Dm755 $(BIN) $(HOME)/.local/bin/mm
 
 clean:
 	rm -rf bin
