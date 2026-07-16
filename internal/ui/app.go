@@ -65,8 +65,6 @@ func mustIcon(data []byte) *widget.Icon {
 type accountState struct {
 	Name      string
 	CredsPath string
-	Provider  string
-	ProjectID string
 
 	refreshBtn widget.Clickable
 	editBtn    widget.Clickable
@@ -94,11 +92,6 @@ type UI struct {
 	cancelBtn      widget.Clickable
 	nameEdit       widget.Editor
 	pathEdit       widget.Editor
-	projectEdit    widget.Editor
-	providerBtn    widget.Clickable
-	providerOpen   bool
-	providerPicked string // accounts.ProviderAnthropic | ProviderGemini
-	providerOpts   [2]widget.Clickable
 	formOpen       bool
 	editIdx        int
 	formErr        string
@@ -154,7 +147,6 @@ func New() *UI {
 	u.applyListAxis()
 	u.nameEdit.SingleLine = true
 	u.pathEdit.SingleLine = true
-	u.projectEdit.SingleLine = true
 	u.fontScaleEdit.SingleLine = true
 	return u
 }
@@ -220,8 +212,6 @@ func (u *UI) Init(accs []accounts.Account) {
 		u.accounts = append(u.accounts, accountState{
 			Name:      a.Name,
 			CredsPath: a.CredsPath,
-			Provider:  a.ProviderOrDefault(),
-			ProjectID: a.ProjectID,
 		})
 	}
 }
@@ -231,8 +221,6 @@ func (u *UI) AppendAccount(a accounts.Account) int {
 	u.accounts = append(u.accounts, accountState{
 		Name:      a.Name,
 		CredsPath: a.CredsPath,
-		Provider:  a.ProviderOrDefault(),
-		ProjectID: a.ProjectID,
 	})
 	return len(u.accounts) - 1
 }
@@ -245,7 +233,7 @@ func (u *UI) RemoveAccountAt(i int) {
 	u.accounts = append(u.accounts[:i], u.accounts[i+1:]...)
 }
 
-// UpdateAccountAt replaces the name/path/provider of the account at i.
+// UpdateAccountAt replaces the name/path of the account at i.
 // Per-row widget state and quota snapshot are preserved.
 func (u *UI) UpdateAccountAt(i int, a accounts.Account) {
 	if i < 0 || i >= len(u.accounts) {
@@ -253,24 +241,6 @@ func (u *UI) UpdateAccountAt(i int, a accounts.Account) {
 	}
 	u.accounts[i].Name = a.Name
 	u.accounts[i].CredsPath = a.CredsPath
-	u.accounts[i].Provider = a.ProviderOrDefault()
-	u.accounts[i].ProjectID = a.ProjectID
-}
-
-// Provider returns the provider id for the account at i (empty if oob).
-func (u *UI) Provider(i int) string {
-	if i < 0 || i >= len(u.accounts) {
-		return ""
-	}
-	return u.accounts[i].Provider
-}
-
-// ProjectID returns the configured project id for the account at i.
-func (u *UI) ProjectID(i int) string {
-	if i < 0 || i >= len(u.accounts) {
-		return ""
-	}
-	return u.accounts[i].ProjectID
 }
 
 // CredsPath returns the credentials path for the account at i (empty if oob).
@@ -496,38 +466,14 @@ func (u *UI) layout(gtx layout.Context) layout.Dimensions {
 	// Add/edit form: open via "+ Add account", per-account "edit", close via
 	// cancel, submit via save.
 	if u.addBtn.Clicked(gtx) {
-		u.openForm(-1, accounts.Account{Provider: accounts.ProviderAnthropic, CredsPath: "~/.claude/.credentials.json"})
+		u.openForm(-1, accounts.Account{CredsPath: defaultCredsPath})
 	}
 	for i := range u.accounts {
 		if u.accounts[i].editBtn.Clicked(gtx) {
 			u.openForm(i, accounts.Account{
 				Name:      u.accounts[i].Name,
 				CredsPath: u.accounts[i].CredsPath,
-				Provider:  u.accounts[i].Provider,
-				ProjectID: u.accounts[i].ProjectID,
 			})
-		}
-	}
-	if u.formOpen {
-		if u.providerBtn.Clicked(gtx) {
-			u.providerOpen = !u.providerOpen
-		}
-		providerLabels := []string{accounts.ProviderAnthropic, accounts.ProviderGemini}
-		for i := range u.providerOpts {
-			if u.providerOpts[i].Clicked(gtx) {
-				newProv := providerLabels[i]
-				if newProv != u.providerPicked {
-					// If the user still has the previous provider's default
-					// creds path, swap it for the new provider's default so
-					// they don't have to re-type it.
-					curPath := strings.TrimSpace(u.pathEdit.Text())
-					if curPath == defaultCredsPath(u.providerPicked) || curPath == "" {
-						u.pathEdit.SetText(defaultCredsPath(newProv))
-					}
-				}
-				u.providerPicked = newProv
-				u.providerOpen = false
-			}
 		}
 	}
 	if u.cancelBtn.Clicked(gtx) {
@@ -537,12 +483,7 @@ func (u *UI) layout(gtx layout.Context) layout.Dimensions {
 	if u.saveBtn.Clicked(gtx) {
 		name := strings.TrimSpace(u.nameEdit.Text())
 		path := strings.TrimSpace(u.pathEdit.Text())
-		project := strings.TrimSpace(u.projectEdit.Text())
-		provider := u.providerPicked
-		if provider == "" {
-			provider = accounts.ProviderAnthropic
-		}
-		acc := accounts.Account{Name: name, CredsPath: path, Provider: provider, ProjectID: project}
+		acc := accounts.Account{Name: name, CredsPath: path}
 		switch {
 		case name == "":
 			u.formErr = "name is required"
@@ -733,44 +674,24 @@ func (u *UI) accountCard(gtx layout.Context, idx int) layout.Dimensions {
 	return dims
 }
 
+// defaultCredsPath is the suggested credentials-file path pre-filled in the
+// add-account form.
+const defaultCredsPath = "~/.claude/.credentials.json"
+
 // openForm shows the add/edit form. editIdx < 0 means "add new"; otherwise the
 // form is bound to that account row. Pass the initial Account values to seed
-// the editors; an empty Provider defaults to Anthropic.
+// the editors.
 func (u *UI) openForm(editIdx int, a accounts.Account) {
 	u.formOpen = true
 	u.settingsOpen = false
 	u.editIdx = editIdx
 	u.formErr = ""
-	u.providerOpen = false
-	prov := a.ProviderOrDefault()
-	u.providerPicked = prov
 	u.nameEdit.SetText(a.Name)
 	path := a.CredsPath
 	if path == "" {
-		path = defaultCredsPath(prov)
+		path = defaultCredsPath
 	}
 	u.pathEdit.SetText(path)
-	u.projectEdit.SetText(a.ProjectID)
-}
-
-// defaultCredsPath returns the suggested creds path for a provider.
-func defaultCredsPath(provider string) string {
-	switch provider {
-	case accounts.ProviderGemini:
-		return "~/.gemini/oauth_creds.json"
-	default:
-		return "~/.claude/.credentials.json"
-	}
-}
-
-// providerLabel returns the user-visible name for a provider id.
-func providerLabel(provider string) string {
-	switch provider {
-	case accounts.ProviderGemini:
-		return "Gemini CLI"
-	default:
-		return "Anthropic (Claude Code)"
-	}
 }
 
 // openSettings shows the settings form, seeded with the current values.
@@ -1134,32 +1055,15 @@ func (u *UI) formRow(gtx layout.Context) layout.Dimensions {
 	if u.editIdx >= 0 {
 		title = "Edit account"
 	}
-	pathHint := "Credentials path"
-	switch u.providerPicked {
-	case accounts.ProviderGemini:
-		pathHint = "Credentials path (~/.gemini/oauth_creds.json)"
-	default:
-		pathHint = "Credentials path (~/.claude/.credentials.json)"
-	}
 	return panel(gtx, cardBg, unit.Dp(10), func(gtx layout.Context) layout.Dimensions {
 		children := []layout.FlexChild{
 			layout.Rigid(u.label(title, accent, u.sp(14))),
 			layout.Rigid(spacer(unit.Dp(8))),
-			layout.Rigid(u.label("Provider", mute, u.sp(11))),
-			layout.Rigid(u.providerDropdown()),
-			layout.Rigid(spacer(unit.Dp(6))),
 			layout.Rigid(u.label("Name", mute, u.sp(11))),
 			layout.Rigid(u.editor(&u.nameEdit, "e.g. work")),
 			layout.Rigid(spacer(unit.Dp(6))),
-			layout.Rigid(u.label(pathHint, mute, u.sp(11))),
-			layout.Rigid(u.editor(&u.pathEdit, defaultCredsPath(u.providerPicked))),
-		}
-		if u.providerPicked == accounts.ProviderGemini {
-			children = append(children,
-				layout.Rigid(spacer(unit.Dp(6))),
-				layout.Rigid(u.label("GCP project id (optional — auto-resolved if empty)", mute, u.sp(11))),
-				layout.Rigid(u.editor(&u.projectEdit, "my-gcp-project")),
-			)
+			layout.Rigid(u.label("Credentials path (~/.claude/.credentials.json)", mute, u.sp(11))),
+			layout.Rigid(u.editor(&u.pathEdit, defaultCredsPath)),
 		}
 		if u.formErr != "" {
 			children = append(children,
@@ -1179,62 +1083,6 @@ func (u *UI) formRow(gtx layout.Context) layout.Dimensions {
 		)
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx, children...)
 	})
-}
-
-// providerDropdown mirrors the font dropdown pattern: a button showing the
-// current provider with a chevron; clicking expands the option list inline.
-func (u *UI) providerDropdown() layout.Widget {
-	return func(gtx layout.Context) layout.Dimensions {
-		chev := iconDropdown
-		if u.providerOpen {
-			chev = iconDropup
-		}
-		opts := []string{accounts.ProviderAnthropic, accounts.ProviderGemini}
-		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				return layout.Inset{Top: unit.Dp(2), Bottom: unit.Dp(2)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-					return u.providerBtn.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-						return panel(gtx, panelBg, unit.Dp(8), func(gtx layout.Context) layout.Dimensions {
-							return layout.Flex{Axis: layout.Horizontal, Alignment: layout.Middle, Spacing: layout.SpaceBetween}.Layout(gtx,
-								layout.Rigid(u.label(providerLabel(u.providerPicked), neutral, u.sp(13))),
-								layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-									gtx.Constraints.Max.X = gtx.Dp(unit.Dp(16))
-									gtx.Constraints.Max.Y = gtx.Dp(unit.Dp(16))
-									return chev.Layout(gtx, mute)
-								}),
-							)
-						})
-					})
-				})
-			}),
-			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				if !u.providerOpen {
-					return layout.Dimensions{}
-				}
-				return layout.Inset{Top: unit.Dp(4), Left: unit.Dp(2), Right: unit.Dp(2)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-					return panel(gtx, panelBg, unit.Dp(4), func(gtx layout.Context) layout.Dimensions {
-						items := make([]layout.FlexChild, 0, len(opts))
-						for i, p := range opts {
-							col := neutral
-							if p == u.providerPicked {
-								col = accent
-							}
-							btn := &u.providerOpts[i]
-							label := providerLabel(p)
-							items = append(items, layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-								return btn.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-									return layout.Inset{Top: unit.Dp(5), Bottom: unit.Dp(5), Left: unit.Dp(8), Right: unit.Dp(8)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-										return u.label(label, col, u.sp(12))(gtx)
-									})
-								})
-							}))
-						}
-						return layout.Flex{Axis: layout.Vertical}.Layout(gtx, items...)
-					})
-				})
-			}),
-		)
-	}
 }
 
 func (u *UI) editor(ed *widget.Editor, hint string) layout.Widget {

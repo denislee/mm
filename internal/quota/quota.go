@@ -1,7 +1,6 @@
-// Package quota defines the provider-agnostic data model the mm UI
-// consumes. Each backend (Anthropic /usage, Gemini retrieveUserQuota, ...)
-// converts its native response into a Snapshot so the rendering code can
-// treat them uniformly.
+// Package quota defines the data model the mm UI consumes. The Anthropic
+// /usage backend converts its native response into a Snapshot so the
+// rendering code can treat windows uniformly.
 package quota
 
 import "time"
@@ -22,7 +21,7 @@ func (w Window) Active() bool {
 // NamedWindow attaches a stable key, human-readable label, and total duration
 // to a Window so the UI can render pacing math and a sortable list.
 type NamedWindow struct {
-	Key      string        // stable id, e.g. "five_hour", "gemini_pro"
+	Key      string        // stable id, e.g. "five_hour", "seven_day"
 	Label    string        // user-visible label
 	Duration time.Duration // total window length, used for pacing
 	Window   Window

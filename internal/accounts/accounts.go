@@ -11,32 +11,15 @@ import (
 	"strings"
 )
 
-// Provider identifies which backend an account targets. Stored as a string
-// to keep accounts.json forward-compatible; empty means "anthropic" for
-// backward compatibility with configs written before Gemini support landed.
-const (
-	ProviderAnthropic = "anthropic"
-	ProviderGemini    = "gemini"
-)
+// ProviderAnthropic is the identifier used as the on-disk cache-key prefix
+// (see internal/cache). mm targets Anthropic exclusively; the constant is
+// retained so the cache key format stays stable across versions.
+const ProviderAnthropic = "anthropic"
 
 // Account is one entry in the accounts.json config file.
 type Account struct {
 	Name      string `json:"name"`
 	CredsPath string `json:"creds_path"`
-	// Provider is "anthropic" (default) or "gemini".
-	Provider string `json:"provider,omitempty"`
-	// ProjectID is the GCP project id used for the Gemini quota call. Empty
-	// means "auto-resolve via GOOGLE_CLOUD_PROJECT or loadCodeAssist".
-	ProjectID string `json:"project_id,omitempty"`
-}
-
-// ProviderOrDefault returns the account's provider, defaulting to Anthropic
-// for entries written before the field existed.
-func (a Account) ProviderOrDefault() string {
-	if a.Provider == "" {
-		return ProviderAnthropic
-	}
-	return a.Provider
 }
 
 // ExpandHome turns a leading "~/" into the user's home directory. Returns the

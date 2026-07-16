@@ -24,8 +24,6 @@ import (
 
 	"github.com/denislee/mm/internal/accounts"
 	"github.com/denislee/mm/internal/cache"
-	"github.com/denislee/mm/internal/gemini"
-	"github.com/denislee/mm/internal/quota"
 	"github.com/denislee/mm/internal/settings"
 	"github.com/denislee/mm/internal/ui"
 	"github.com/denislee/mm/internal/usage"
@@ -75,34 +73,20 @@ func main() {
 		w.Invalidate()
 	}
 
-	// fetch hits the provider's usage endpoint, updates the UI, and persists
+	// fetch hits the Anthropic usage endpoint, updates the UI, and persists
 	// the result to the shared cache so sibling instances can reuse it.
 	fetch := func(idx int) {
 		credsPath := accounts.ExpandHome(u.CredsPath(idx))
 		if credsPath == "" {
 			return
 		}
-		provider := u.Provider(idx)
-		projectID := u.ProjectID(idx)
-		key := cache.Key(provider, credsPath)
+		key := cache.Key(accounts.ProviderAnthropic, credsPath)
 		go func() {
 			ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 			defer cancel()
-			var (
-				snap quota.Snapshot
-				err  error
-			)
-			switch provider {
-			case accounts.ProviderGemini:
-				c := gemini.NewClient()
-				c.CredsPath = credsPath
-				c.ProjectID = projectID
-				snap, err = c.Fetch(ctx)
-			default:
-				c := usage.NewClient()
-				c.CredsPath = credsPath
-				snap, err = c.Fetch(ctx)
-			}
+			c := usage.NewClient()
+			c.CredsPath = credsPath
+			snap, err := c.Fetch(ctx)
 			if err != nil {
 				u.SetQuotaErr(idx, err.Error())
 			} else {
@@ -120,12 +104,11 @@ func main() {
 	// automatic refreshes; manual refresh button keeps using fetch() directly
 	// so the user always gets fresh data when they ask for it.
 	fetchIfStale := func(idx int) {
-		provider := u.Provider(idx)
 		credsPath := accounts.ExpandHome(u.CredsPath(idx))
 		if credsPath == "" {
 			return
 		}
-		key := cache.Key(provider, credsPath)
+		key := cache.Key(accounts.ProviderAnthropic, credsPath)
 		if snap, ok := cache.Get(key); ok && cache.Fresh(snap) {
 			u.SetQuota(idx, snap)
 			u.SetQuotaLoading(idx, false)
@@ -171,9 +154,8 @@ func main() {
 	// otherwise kick off a real fetch. Avoids two instances both hitting the
 	// usage endpoint on startup when one of them already has fresh data.
 	for i := 0; i < u.AccountCount(); i++ {
-		provider := u.Provider(i)
 		credsPath := accounts.ExpandHome(u.CredsPath(i))
-		key := cache.Key(provider, credsPath)
+		key := cache.Key(accounts.ProviderAnthropic, credsPath)
 		if snap, ok := cache.Get(key); ok {
 			u.SetQuota(i, snap)
 			if !cache.Fresh(snap) {
@@ -240,7 +222,7 @@ func main() {
 				}
 				changed := false
 				for i := 0; i < u.AccountCount(); i++ {
-					key := cache.Key(u.Provider(i), accounts.ExpandHome(u.CredsPath(i)))
+					key := cache.Key(accounts.ProviderAnthropic, accounts.ExpandHome(u.CredsPath(i)))
 					snap, ok := c.Entries[key]
 					if !ok {
 						continue
@@ -275,8 +257,6 @@ func persistAccounts(u *ui.UI) error {
 		out = append(out, accounts.Account{
 			Name:      u.AccountName(i),
 			CredsPath: u.CredsPath(i),
-			Provider:  u.Provider(i),
-			ProjectID: u.ProjectID(i),
 		})
 	}
 	return accounts.Save(out)
