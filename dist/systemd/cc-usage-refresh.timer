@@ -1,0 +1,13 @@
+[Unit]
+Description=Poll Claude Code usage every 5 minutes (single poller for mm / waybar)
+
+[Timer]
+# First run shortly after the user manager comes up, then every 5 minutes.
+OnActiveSec=30s
+OnUnitActiveSec=5min
+# Catch up after suspend/downtime instead of waiting a full interval.
+Persistent=true
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

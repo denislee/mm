@@ -1,0 +1,13 @@
+[Unit]
+Description=Refresh Claude Code usage cache (mm / waybar)
+Documentation=https://github.com/denislee/mm
+
+[Service]
+Type=oneshot
+# Force one fetch and write the shared cache (~/.config/mm/usage_cache.json).
+# On a transient upstream error it logs and exits 0 so the timer keeps running
+# and readers fall back to the last known state.
+# NOTE: path assumes the default install prefix (~/.local/bin). If you install
+# cc-waybar elsewhere, edit this ExecStart accordingly.
+ExecStart=%h/.local/bin/cc-waybar -refresh
+Nice=10
