@@ -14,10 +14,12 @@
 //
 // The `text` draws a filled bar for the session and weekly (all-models)
 // windows out of block glyphs coloured with Pango markup (fill / over-budget /
-// ideal-pace marker), plus a compact pace label (▼N% under / ▲N% over) next to
-// the week %. The `tooltip` reproduces the full detail (reset times, ideal
-// pace, over/under budget). `class` drives a fallback CSS colour and
-// `percentage` is the larger of the two windows so Waybar `states` also work.
+// ideal-pace marker), a compact pace label (▼N% under / ▲N% over) next to the
+// week %, and a muted reset countdown (2h30m) after each window showing how
+// long until it resets. The `tooltip` reproduces the full detail (absolute
+// reset times, ideal pace, over/under budget). `class` drives a fallback CSS
+// colour and `percentage` is the larger of the two windows so Waybar `states`
+// also work.
 //
 // To stay under the endpoint's rate limit, a cached snapshot newer than
 // -max-age (default: the cache package TTL) is reused instead of fetching, so
@@ -160,7 +162,7 @@ func render(snap quota.Snapshot, width int, stale bool, cause error) {
 	var parts []string
 	if sOK {
 		parts = append(parts, "S "+bar(session.Window, session.Duration, width)+
-			fmt.Sprintf(" %.0f%%", session.Window.Utilization))
+			fmt.Sprintf(" %.0f%%", session.Window.Utilization)+resetLabel(session.Window))
 	}
 	if wOK {
 		wpart := "W " + bar(week.Window, week.Duration, width) +
@@ -176,6 +178,7 @@ func render(snap quota.Snapshot, width int, stale bool, cause error) {
 			}
 			wpart += fmt.Sprintf("  <span foreground='%s'>%s</span>", col, label)
 		}
+		wpart += resetLabel(week.Window)
 		parts = append(parts, wpart)
 	}
 
@@ -417,6 +420,23 @@ func formatReset(t time.Time) string {
 		return local.Format("15:04")
 	}
 	return local.Format("Mon 15:04")
+}
+
+// resetLabel renders a compact, muted "time until this window resets" suffix
+// for the bar text (e.g. 2h30m), or "" when the window has no reset time.
+// ResetsAt is absolute, so this keeps counting down correctly even on a stale
+// cached snapshot.
+func resetLabel(w quota.Window) string {
+	if w.ResetsAt.IsZero() {
+		return ""
+	}
+	return fmt.Sprintf("  <span foreground='%s'>%s</span>", colMute, formatUntilCompact(w.ResetsAt))
+}
+
+// formatUntilCompact is formatUntil with the spaces squeezed out ("3h 20m" ->
+// "3h20m"), so the inline reset countdown stays terse in the bar text.
+func formatUntilCompact(t time.Time) string {
+	return strings.ReplaceAll(formatUntil(t), " ", "")
 }
 
 func formatUntil(t time.Time) string {
