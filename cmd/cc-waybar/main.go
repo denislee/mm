@@ -26,7 +26,7 @@
 //
 // On a failed fetch (e.g. the /usage endpoint's HTTP 429 rate limit) the last
 // successful snapshot is rendered from mm's shared on-disk cache rather than
-// blanking the module; the robot glyph dims and the tooltip notes it's stale.
+// blanking the module; the whole module dims and the tooltip notes it's stale.
 // Reset/pace math stays correct off cache because ResetsAt is absolute — only
 // the utilisation % is frozen. The -mock and -fail flags exercise the render
 // and fallback paths without touching the network.
@@ -60,9 +60,8 @@ const (
 	colNeutral = "#d7dae0" // ideal-pace marker while under / on pace
 	colMark    = "#ffe07a" // ideal-pace marker when over budget (amber)
 	colWarn    = "#ffc65c" // amber: hot session (no pacing target)
-	colMute    = "#8a93a0" // dimmed glyph when showing stale/cached data
+	colMute    = "#8a93a0" // dimmed text when showing stale/cached data
 	glyph      = "█"       // full block — every cell, colour-coded, so widths align
-	robotGlyph = ""  // fa-robot
 )
 
 // out is the Waybar custom-module JSON shape.
@@ -145,23 +144,18 @@ func main() {
 
 	// Nothing cached yet — muted placeholder with the reason on hover.
 	emit(out{
-		Text:    robotGlyph + " —",
+		Text:    "—",
 		Tooltip: "Claude Code usage unavailable\n" + err.Error(),
 		Class:   "error",
 	})
 }
 
 // render builds and emits the Waybar JSON for a snapshot. When stale is set the
-// data came from cache after a failed fetch: the robot glyph is dimmed and the
+// data came from cache after a failed fetch: the whole module is dimmed and the
 // tooltip gets a staleness note, but the bars still show the last known values.
 func render(snap quota.Snapshot, width int, stale bool, cause error) {
 	session, sOK := windowByKey(snap, "five_hour")
 	week, wOK := windowByKey(snap, "seven_day")
-
-	robot := robotGlyph
-	if stale {
-		robot = fmt.Sprintf("<span foreground='%s'>%s</span>", colMute, robotGlyph)
-	}
 
 	var parts []string
 	if sOK {
@@ -185,11 +179,15 @@ func render(snap quota.Snapshot, width int, stale bool, cause error) {
 		parts = append(parts, wpart)
 	}
 
-	text := robot + " "
-	if len(parts) == 0 {
-		text += "—"
-	} else {
-		text += strings.Join(parts, "  ")
+	text := "—"
+	if len(parts) > 0 {
+		text = strings.Join(parts, "  ")
+	}
+	// A failed fetch renders the last cached snapshot: dim the whole module so
+	// stale data reads as visibly different from live (the tooltip explains why).
+	// Inner per-cell spans keep their colour, so the bars stay legible.
+	if stale {
+		text = fmt.Sprintf("<span foreground='%s'>%s</span>", colMute, text)
 	}
 
 	tip := tooltip(session, sOK, week, wOK)
