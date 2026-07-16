@@ -12,7 +12,7 @@ type Window struct {
 	ResetsAt    time.Time
 }
 
-// Active reports whether the provider actually returned this window. Inactive
+// Active reports whether the backend actually returned this window. Inactive
 // (zero-value) windows are skipped by the UI.
 func (w Window) Active() bool {
 	return !w.ResetsAt.IsZero()
@@ -30,7 +30,7 @@ type NamedWindow struct {
 	Hidden bool
 }
 
-// Snapshot is a provider's full response, normalised into a slice of windows
+// Snapshot is the backend's full response, normalised into a slice of windows
 // plus a wall-clock fetch time used for the "updated N ago" label.
 type Snapshot struct {
 	Windows   []NamedWindow

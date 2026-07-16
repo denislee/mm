@@ -82,7 +82,7 @@ func main() {
 	flag.Parse()
 
 	client := usage.NewClient()
-	key := cache.Key("", client.CredsPath)
+	key := cache.Key(client.CredsPath)
 
 	// -refresh: the single scheduled poller (a systemd --user timer). Force a
 	// fetch, update the shared cache, and exit without Waybar output. A

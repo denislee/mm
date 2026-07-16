@@ -1,9 +1,9 @@
 // Package cache persists fetched usage snapshots to disk so multiple running
-// instances of mm can share the same data without each hitting the
-// provider's usage endpoint on its own timer.
+// instances of mm can share the same data without each hitting the Anthropic
+// usage endpoint on its own timer.
 //
 // The cache lives at ~/.config/mm/usage_cache.json and is keyed by
-// "<provider>:<expanded-creds-path>" so renaming an account doesn't lose its
+// "anthropic:<expanded-creds-path>" so renaming an account doesn't lose its
 // data and two accounts pointing at the same credentials file share state.
 package cache
 
@@ -19,8 +19,8 @@ import (
 )
 
 // TTL is how long a cached entry is considered fresh enough that a second
-// instance can use it instead of re-hitting the provider. Slightly under the
-// 5-minute auto-refresh tick so a sibling instance's data is reused even if
+// instance can use it instead of re-hitting the usage endpoint. Slightly under
+// the 5-minute auto-refresh tick so a sibling instance's data is reused even if
 // its tick fired moments before this instance's tick.
 const TTL = 4 * time.Minute
 
@@ -29,12 +29,11 @@ type Cache struct {
 	Entries map[string]quota.Snapshot `json:"entries"`
 }
 
-// Key returns the stable cache key for an account.
-func Key(provider, credsPath string) string {
-	if provider == "" {
-		provider = accounts.ProviderAnthropic
-	}
-	return provider + ":" + accounts.ExpandHome(credsPath)
+// Key returns the stable cache key for an account: the fixed "anthropic:"
+// prefix (retained so the on-disk key format stays stable across versions)
+// followed by the home-expanded credentials path.
+func Key(credsPath string) string {
+	return accounts.ProviderAnthropic + ":" + accounts.ExpandHome(credsPath)
 }
 
 // Path returns the canonical path to usage_cache.json.

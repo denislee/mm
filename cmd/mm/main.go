@@ -80,7 +80,7 @@ func main() {
 		if credsPath == "" {
 			return
 		}
-		key := cache.Key(accounts.ProviderAnthropic, credsPath)
+		key := cache.Key(credsPath)
 		go func() {
 			ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 			defer cancel()
@@ -108,7 +108,7 @@ func main() {
 		if credsPath == "" {
 			return
 		}
-		key := cache.Key(accounts.ProviderAnthropic, credsPath)
+		key := cache.Key(credsPath)
 		if snap, ok := cache.Get(key); ok && cache.Fresh(snap) {
 			u.SetQuota(idx, snap)
 			u.SetQuotaLoading(idx, false)
@@ -155,7 +155,7 @@ func main() {
 	// usage endpoint on startup when one of them already has fresh data.
 	for i := 0; i < u.AccountCount(); i++ {
 		credsPath := accounts.ExpandHome(u.CredsPath(i))
-		key := cache.Key(accounts.ProviderAnthropic, credsPath)
+		key := cache.Key(credsPath)
 		if snap, ok := cache.Get(key); ok {
 			u.SetQuota(i, snap)
 			if !cache.Fresh(snap) {
@@ -185,7 +185,7 @@ func main() {
 	// Auto-refresh every account on a 5-minute cadence. The 5-hour Anthropic
 	// window shifts ~1.7% per 5 min at full burn, the 7-day windows shift
 	// well under 1% — fine-grained enough to track active usage without
-	// surprising the providers' undocumented internal endpoints.
+	// surprising Anthropic's undocumented internal endpoint.
 	//
 	// Goes through fetchIfStale so a sibling instance's recent snapshot
 	// satisfies the tick without a duplicate network call.
@@ -222,7 +222,7 @@ func main() {
 				}
 				changed := false
 				for i := 0; i < u.AccountCount(); i++ {
-					key := cache.Key(accounts.ProviderAnthropic, accounts.ExpandHome(u.CredsPath(i)))
+					key := cache.Key(accounts.ExpandHome(u.CredsPath(i)))
 					snap, ok := c.Entries[key]
 					if !ok {
 						continue
